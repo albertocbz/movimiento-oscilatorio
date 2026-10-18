@@ -18,7 +18,6 @@ A = st.sidebar.slider("Amplitud (m)", 10, 100, 40, 1)
 omega = st.sidebar.slider("Frecuencia angular", 0.1, 10.0, 2.0, 0.1)
 phi = st.sidebar.slider("Desfase (rad)", -3.14, 3.14, 0.0, 0.1)
 
-# Carga segura de las nuevas imágenes con caché
 @st.cache_data
 def cargar_imagenes():
     try:
@@ -27,11 +26,11 @@ def cargar_imagenes():
         fondo = Image.open("fondo.jpg")
         return bloque, resorte, fondo
     except FileNotFoundError as e:
-        return None, None
+        return None, None, None
 
 bloque, resorte, fondo = cargar_imagenes()
 if bloque is None or resorte is None or fondo is None:
-    st.error("Faltan las imágenes 'bloque.png' o 'resorte.png' o 'fondo,jpg' en la carpeta.")
+    st.error("Faltan algunas imágenes en la carpeta ('bloque.png', 'resorte.png' o 'fondo.jpg').")
     st.stop()
 
 col1, col2 = st.sidebar.columns(2)
@@ -50,7 +49,6 @@ if play:
 
 contenedor_grafico = st.empty()
 
-# --- CREACIÓN DE LA FIGURA BASE (ESTÁTICA) ---
 def crear_figura_base():
     fig, axis = plt.subplots(figsize=(8, 4.5))
     fig.patch.set_facecolor("#1e1e1e")
@@ -64,45 +62,33 @@ def crear_figura_base():
     
     axis.imshow(fondo, extent=[0, 500, 0, 280], zorder=0)
     
-    # Línea de referencia del suelo o carril
-    axis.axhline(y=110, color="gray", linestyle="-", linewidth=2, zorder=1)
+    axis.fill_between([0, 500], 0, 110, color="olivedrab", zorder=1)
+    axis.axhline(y=110, color="dimgray", linestyle="-", linewidth=2, zorder=2)
     
-    # Pared fija a la izquierda donde va sujeto el resorte
-    axis.axvspan(50, 60, ymin=0.35, ymax=0.65, color="white", zorder=2)
-    
-    # Elementos dinámicos iniciales (resorte y bloque)
-    # Usamos imshow para ambos para poder actualizar su extent de forma fluida
-    resorte_im = axis.imshow(resorte, extent=[60, 150, 120, 150], zorder=3)
-    bloque_im = axis.imshow(bloque, extent=[140, 180, 110, 160], zorder=4)
+    resorte_im = axis.imshow(resorte, extent=[0, 150, 120, 150], zorder=3)
+    bloque_im = axis.imshow(bloque, extent=[130, 190, 110, 165], zorder=4)
     
     return fig, axis, resorte_im, bloque_im
 
 fig, axis, resorte_im, bloque_im = crear_figura_base()
 
-# Configuración geométrica del movimiento
-x_pared = 60
-y_centro = 135
+x_pared = 0
+y_centro = 137
 
 if st.session_state.animando_osc:
-    t_max = 4 * np.pi / omega  # Ciclos de oscilación
+    t_max = 4 * np.pi / omega
     t = np.linspace(0, t_max, 80)
     
-    # Cálculo del movimiento armónico simple en el eje X para el bloque
     x_desplazamiento = A * np.cos(omega * t + phi)
-    # Posición central base del bloque
     x_bloque_centro = 250 + x_desplazamiento
     
-    # Mostrar estado estático inicial
     contenedor_grafico.pyplot(fig)
     
     for i in range(1, len(x_bloque_centro)):
         xb = x_bloque_centro[i]
         
-        # El bloque se mueve en base a su posición calculada
-        bloque_im.set_extent([xb - 20, xb + 20, y_centro - 25, y_centro + 25])
-        
-        # El resorte se estira/contrae dinámicamente desde la pared fija hasta el bloque
-        resorte_im.set_extent([x_pared, xb - 15, y_centro - 12, y_centro + 12])
+        bloque_im.set_extent([xb - 30, xb + 30, y_centro - 27, y_centro + 28])
+        resorte_im.set_extent([x_pared, xb - 25, y_centro - 12, y_centro + 12])
         
         contenedor_grafico.pyplot(fig)
         time.sleep(0.02)
@@ -110,8 +96,7 @@ if st.session_state.animando_osc:
     st.session_state.animando_osc = False
     plt.close(fig)
 else:
-    # Estado estático inicial de parada
-    bloque_im.set_extent([250 - 20, 250 + 20, y_centro - 25, y_centro + 25])
-    resorte_im.set_extent([x_pared, 250 - 15, y_centro - 12, y_centro + 12])
+    bloque_im.set_extent([250 - 30, 250 + 30, y_centro - 27, y_centro + 28])
+    resorte_im.set_extent([x_pared, 250 - 25, y_centro - 12, y_centro + 12])
     contenedor_grafico.pyplot(fig)
     plt.close(fig)
