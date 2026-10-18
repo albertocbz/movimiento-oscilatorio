@@ -24,13 +24,14 @@ def cargar_imagenes():
     try:
         bloque = Image.open("bloque.png")
         resorte = Image.open("resorte.png")
-        return bloque, resorte
+        fondo = Image.open("fondo.jpg")
+        return bloque, resorte, fondo
     except FileNotFoundError as e:
         return None, None
 
-bloque, resorte = cargar_imagenes()
-if bloque is None or resorte is None:
-    st.error("Faltan las imágenes 'bloque.png' o 'resorte.png' en la carpeta.")
+bloque, resorte, fondo = cargar_imagenes()
+if bloque is None or resorte is None or fondo is None:
+    st.error("Faltan las imágenes 'bloque.png' o 'resorte.png' o 'fondo,jpg' en la carpeta.")
     st.stop()
 
 col1, col2 = st.sidebar.columns(2)
@@ -60,6 +61,8 @@ def crear_figura_base():
         
     axis.set_xlim([0, 500])
     axis.set_ylim([0, 280])
+    
+    axis.imshow(fondo, extent=[0, 500, 0, 280], zorder=0)
     
     # Línea de referencia del suelo o carril
     axis.axhline(y=110, color="gray", linestyle="-", linewidth=2, zorder=1)
